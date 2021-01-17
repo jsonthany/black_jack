@@ -44,6 +44,26 @@ class Deck():
 
         return self.all_cards.pop()
 
+# OUTPUTS STATEMENT FOR PLAYER'S CARD HAND
+
+
+def my_hand(cards, value):
+
+    print_card = ''
+    i = 0
+
+    for card in cards:
+
+        i += 1
+
+        if i != len(cards):
+            print_card += str(card) + ', '
+        else:
+            print_card += str(card)
+
+    print(
+        f'You currently have {print_card}. Total value is: {value}.')
+
 
 # BET SIZE
 def bet(balance):
@@ -75,7 +95,7 @@ def hit_me():
         return False
 
 
-# Play again?
+# PLAY AGAIN?
 def play_again():
 
     play = input('Would you like to play again? (Y/N) ').upper()
@@ -119,15 +139,15 @@ while game_on:
     for i in range(len(dealer_cards)):
         dealer_value += dealer_cards[i].value
 
-    print(
-        f'You currently have {player_cards[0]} and {player_cards[1]}. Total value is: {player_value}.')
+    my_hand(player_cards, player_value)
 
     if player_value == 21:
         player_balance += bet_value
 
         print('Congradulations, you won this round.')
-        print('You won ${bet_value}.')
-        print('You won ${bet_value} and updated balance is ${player_balance}.')
+        print(f'You won ${bet_value}.')
+        print(
+            f'You won ${bet_value} and updated balance is ${player_balance}.')
 
     else:
         draw_more = hit_me()
@@ -207,7 +227,7 @@ while game_on:
 
                         continue
 
-    # play again? depends on whether balance is enough
+    # play again? depends also on whether balance is enough
     if player_balance < 5:
         print('Sorry, your remaining balance is too low. Please come back with more.')
         break
