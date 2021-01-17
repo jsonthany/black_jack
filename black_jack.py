@@ -207,7 +207,7 @@ while game_on:
 
                         continue
 
-    # play again? depends on whether balance is enough.
+    # play again? depends on whether balance is enough
     if player_balance < 5:
         print('Sorry, your remaining balance is too low. Please come back with more.')
         break
