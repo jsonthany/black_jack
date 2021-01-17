@@ -6,6 +6,7 @@ ranks = ('Two', 'Three', 'Four', 'Five', 'Six', 'Seven',
          'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'Jack', 'Ace')
 values = {'Two': 2, 'Three': 3, 'Four': 4, 'Five': 5, 'Six': 6, 'Seven': 7,
           'Eight': 8, 'Nine': 9, 'Ten': 10, 'Jack': 10, 'Queen': 10, 'King': 10, 'Ace': 11}
+initial_card_count = 2
 
 
 # CARD CLASS
@@ -44,10 +45,33 @@ class Deck():
 
         return self.all_cards.pop()
 
+
+# HAND CARDS AND VALUE
+class Hand():
+
+    def __init__(self):
+
+        self.cards = []
+        self.value = 0
+        self.aces = 0
+
+    def add_card(self, card):
+
+        self.cards.append(card)
+        self.value += values[card.rank]
+
+        if card.rank == 'Ace':
+            self.aces += 1
+
+    def adjust_for_aces(self):
+
+        while self.value > 21 and self.aces:
+            self.value -= 10
+            self.aces -= 1
+
+
 # OUTPUTS STATEMENT FOR PLAYER'S CARD HAND
-
-
-def my_hand(cards, value):
+def preview_hand(name, cards, value):
 
     print_card = ''
     i = 0
@@ -62,7 +86,7 @@ def my_hand(cards, value):
             print_card += str(card)
 
     print(
-        f'You currently have {print_card}. Total value is: {value}.')
+        f'{name} currently have {print_card}. Total value is: {value}.')
 
 
 # BET SIZE
@@ -82,6 +106,11 @@ def bet(balance):
             continue
         else:
             return bet_size
+
+
+def player_win():
+
+    pass
 
 
 # HIT ME!
@@ -114,40 +143,36 @@ game_on = True
 
 while game_on:
 
+    # start with a new shuffled deck
     new_deck = Deck()
     new_deck.shuffle()
 
+    # will dealer take additional cards?
     pass_dealer = False
 
+    # player places his bet
     bet_value = bet(player_balance)
 
     # deal two cards to each player
-    player_cards = []
-    dealer_cards = []
+    player = Hand()
+    dealer = Hand()
 
-    player_value = 0
-    dealer_value = 0
+    for i in range(initial_card_count):
+        player.add_card(new_deck.deal_one())
+        dealer.add_card(new_deck.deal_one())
 
-    for i in range(2):
-        player_cards.append(new_deck.deal_one())
-        dealer_cards.append(new_deck.deal_one())
+    # preview initial hands of both the player and dealer
+    preview_hand('You', player.cards, player.value)
+    preview_hand('Dealer', dealer.cards, dealer.value)
 
-    # value of each player's cards
-    for i in range(len(player_cards)):
-        player_value += player_cards[i].value
+    # if both player and dealer have 21 on first draw, there is a tie
+    if player.value == dealer.value == 21:
+        print('TIE! Neither player or dealer wins.')
+        pass_dealer = True
+        continue
 
-    for i in range(len(dealer_cards)):
-        dealer_value += dealer_cards[i].value
-
-    my_hand(player_cards, player_value)
-
-    if player_value == 21:
-        player_balance += bet_value
-
-        print('Congradulations, you won this round.')
-        print(f'You won ${bet_value}.')
-        print(
-            f'You won ${bet_value} and updated balance is ${player_balance}.')
+    elif player.value == 21 and dealer.value != 21:
+        continue
 
     else:
         draw_more = hit_me()
@@ -155,77 +180,101 @@ while game_on:
         while draw_more:
 
             new_card = new_deck.deal_one()
-            player_value += new_card.value
+            player.add_card(new_card)
+            player.adjust_for_aces
 
-            if player_value == 21:
-
-                player_balance += bet_value
-                pass_dealer = True
-
-                print(
-                    f'You drew have {new_card}. Your updated value is: {player_value}.')
-                print('Congradulations, you won this round.')
-                print(
-                    f'You won ${bet_value} and updated balance is ${player_balance}.')
+            if player.value == 21:
+                print(f'You drew have {new_card}.')
+                preview_hand('You', player.cards, player.value)
                 break
 
-            elif player_value < 21:
-                print(
-                    f'You drew have {new_card}. Your updated value is: {player_value}.')
+            elif player.value < 21:
+                print(f'You drew have {new_card}.')
+                preview_hand('You', player.cards, player.value)
                 draw_more = hit_me()
+
             else:
                 player_balance -= bet_value
                 pass_dealer = True
 
-                print(
-                    f'You drew have {new_card}. Your updated value is: {player_value}.')
-                print(
-                    f'BUST! You lost ${bet_value} and remaining balance is ${player_balance}')
-                break
+                print(f'You drew have {new_card}.')
+                preview_hand('You', player.cards, player.value)
 
-        # does the dealer need to play this round?
-        if pass_dealer == True:
-            continue
-        else:
+                print(
+                    f'BUST! You lost ${bet_value}. Remaining balance is ${player_balance}')
+                draw_more = False
+
+    # does the dealer need to play this round?
+    if pass_dealer == True:
+        pass
+
+    else:
+        if dealer.value > player.value:
+
+            player_balance -= bet_value
+
             print(
-                f'Dealer has {dealer_cards[0]} and {dealer_cards[1]}. Total value is: {dealer_value}.')
+                f'Sorry, you lost this game to the dealer. Remaining balance is ${player_balance}')
 
-            if dealer_value > player_value:
-                player_balance -= bet_value
+        elif dealer.value >= 17 and player.value > dealer.value:
 
-                print('Sorry, you lost this game to the dealer.')
+            player_balance += bet_value
+            print('Congradulations, you won this round.')
+            print(
+                f'You won ${bet_value}. Remaining balance is ${player_balance}')
 
-            else:
-                while True:
+        else:
+            while True:
 
-                    new_card = new_deck.deal_one()
-                    dealer_value += new_card.value
+                new_card = new_deck.deal_one()
+                dealer.add_card(new_card)
+                dealer.adjust_for_aces
 
-                    if dealer_value > 21:
-                        player_balance += bet_value
+                if dealer.value > 21:
 
-                        print(
-                            f'BUST! Dealer drew {new_card}. Dealer updated value is: {dealer_value}.')
-                        print('Congradulations, you won this round.')
-                        print(
-                            f'You won ${bet_value} and updated balance is ${player_balance}.')
+                    player_balance += bet_value
 
-                        break
+                    print(f'Dealer drew have {new_card}.')
+                    preview_hand('Dealer', dealer.cards, dealer.value)
+                    print('Congradulations, you won this round.')
+                    print(
+                        f'BUST! You won ${bet_value}. Remaining balance is ${player_balance}')
 
-                    elif dealer_value > player_value:
-                        player_balance -= bet_value
+                    break
 
-                        print(
-                            f'Dealer drew {new_card}. Dealer updated value is: {dealer_value}.')
-                        print('Sorry, you lost this game to the dealer.')
+                elif dealer.value > player.value:
 
+                    player_balance -= bet_value
+
+                    print(f'Dealer drew {new_card}.')
+                    preview_hand('Dealer', dealer.cards, dealer.value)
+                    print(
+                        f'Sorry, you lost. Remaining balance is ${player_balance}')
+
+                    break
+
+                elif dealer.value >= 17:
+
+                    if dealer.value == player.value:
+
+                        print(f'Dealer drew {new_card}.')
+                        preview_hand('Dealer', dealer.cards, dealer.value)
+                        print('TIE! Neither player or dealer wins.')
                         break
 
                     else:
-                        print(
-                            f'Dealer drew {new_card}. Dealer updated value is: {dealer_value}.')
+                        player_balance += bet_value
 
-                        continue
+                        print(f'Dealer drew have {new_card}.')
+                        preview_hand('Dealer', dealer.cards, dealer.value)
+                        print('Congradulations, you won this round.')
+                        print(
+                            f'You won ${bet_value}. Remaining balance is ${player_balance}')
+
+                    break
+
+                else:
+                    continue
 
     # play again? depends also on whether balance is enough
     if player_balance < 5:
